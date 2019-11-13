@@ -1,0 +1,78 @@
+service: comments-api
+
+provider:
+  name: aws
+  runtime: dotnetcore2.1
+  region: eu-central-1
+  profile: serverlessuser
+  apiKeys:
+    - CommentsAPIKey
+  environment:
+      DBTableName:
+        Ref: CommentsDynamoDB
+      QueueUrl:
+        Ref: CommentsQueue
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - sqs:*
+      Resource:
+        - "Fn::GetAtt": CommentsQueue.Arn
+    - Effect: Allow
+      Action:
+        - dynamodb:*
+      Resource:
+        - "Fn::GetAtt": CommentsDynamoDB.Arn
+
+package:
+  individually: true
+
+functions:
+  api:
+    handler: CsharpHandlers::AwsDotnetCsharp.LambdaEntryPoint::FunctionHandlerAsync
+    events:
+      - http:
+          path: '{proxy+}'
+          method: ANY
+          private: true
+    package:
+      artifact: bin/release/netcoreapp2.1/api-handler.zip
+
+resources:
+  Resources:
+    CommentsDynamoDB:
+     Type: AWS::DynamoDB::Table
+     Properties:
+       TableName: "Comments"
+       ProvisionedThroughput: 
+         ReadCapacityUnits: 1
+         WriteCapacityUnits: 1
+       AttributeDefinitions:
+         - AttributeName: id
+           AttributeType: S
+       KeySchema:
+         - AttributeName: id
+           KeyType: HASH
+    CommentsQueue:
+      Type: "AWS::SQS::Queue"
+      Properties:
+        QueueName: "comments"
+  Outputs:
+    CommentsDynamoDBArn:
+      Description: "DynamoDB ARN of Comments"
+      Value:
+        "Fn::GetAtt": [CommentsDynamoDB, Arn]
+      Export:
+        Name: CommentsDynamoDBArn
+    CommentsDynamoDBTableName:
+      Description: "DynamoDB TableName of Comments"
+      Value:
+        Ref: CommentsDynamoDB
+      Export:
+        Name: CommentsDynamoDBTableName
+    CommentsQueueArn:
+      Description: "SQS ARN of comments"
+      Value:
+        "Fn::GetAtt": [CommentsQueue, Arn]
+      Export:
+        Name: CommentsQueueArn

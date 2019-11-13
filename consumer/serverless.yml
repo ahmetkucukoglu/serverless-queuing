@@ -1,0 +1,40 @@
+service: comments-consumer
+
+provider:
+  name: aws
+  runtime: dotnetcore2.1
+  region: eu-central-1
+  profile: serverlessuser
+  environment:
+      DBTableName: !ImportValue CommentsDynamoDBTableName
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - sqs:*
+      Resource:
+        - 'Fn::ImportValue': CommentsQueueArn
+    - Effect: Allow
+      Action:
+        - comprehend:DetectDominantLanguage
+      Resource:
+        - '*'
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:UpdateItem
+      Resource:
+        - 'Fn::ImportValue': CommentsDynamoDBArn
+
+package:
+  individually: true
+
+functions:
+  consumer:
+    handler: CsharpHandlers::AwsDotnetCsharp.ConsumerHandler::ReceiveQueue
+    events:
+      - sqs:
+          arn: 
+            'Fn::ImportValue': CommentsQueueArn
+          batchSize: 1
+    package:
+      artifact: bin/release/netcoreapp2.1/consumer-handler.zip
