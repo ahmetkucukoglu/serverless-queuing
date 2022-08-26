@@ -12,7 +12,7 @@
     <PackageReference Include="AWSSDK.DynamoDBv2" Version="3.3.101.88" />
     <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="3.3.100.1" />
     <PackageReference Include="AWSSDK.SQS" Version="3.3.102.29" />
-    <PackageReference Include="Microsoft.AspNetCore.App" Version="2.1.4" />
+    <PackageReference Include="Microsoft.AspNetCore.App" Version="2.1.22" />
   </ItemGroup>
 
   <ItemGroup>
